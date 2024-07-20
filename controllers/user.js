@@ -86,7 +86,7 @@ const updateProfile = async (req, res) => {
     }
 
     // Update user details
-    const user = await Users.findByIdAndUpdate(userId, updateFields, { new: true });
+    const user = await User.findByIdAndUpdate(userId, updateFields, { new: true });
 
     if (!user) {
       return res.status(404).json({ success: false, error: "User not found" });
