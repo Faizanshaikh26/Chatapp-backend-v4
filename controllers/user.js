@@ -6,6 +6,7 @@ import { Chat } from "../models/chat.js";
 import { Request } from "../models/request.js";
 import { User } from "../models/user.js";
 import {hash} from "bcrypt"
+import {mongoose} from 'mongoose'
 import {
   cookieOptions,
   emitEvent,
