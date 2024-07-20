@@ -5,7 +5,7 @@ import { TryCatch } from "../middlewares/error.js";
 import { Chat } from "../models/chat.js";
 import { Request } from "../models/request.js";
 import { User } from "../models/user.js";
-import {hash} from "bcrypt"
+import { hash } from "bcrypt";
 import {
   cookieOptions,
   emitEvent,
@@ -66,47 +66,31 @@ const getMyProfile = TryCatch(async (req, res, next) => {
     user,
   });
 });
-// Update user profile
-// Update user profile by user ID
-const updateUserProfile = TryCatch(async (req, res, next) => {
-  const { id } = req.params; // Extract user ID from URL parameters
-  const { name, bio, password } = req.body;
+
+const updateMyProfile = TryCatch(async (req, res, next) => {
+  const { name, bio, email, username } = req.body;
+  const newUser = { name, bio, email, username };
+
+  // Check if a file is provided
   const file = req.file;
-
-  const updateData = {
-    name,
-    bio,
-  };
-
-  if (password) {
-    updateData.password = await hash(password, 10);
-  }
-
   if (file) {
-    // Upload new avatar if a file is provided
     const result = await uploadFilesToCloudinary([file]);
-    updateData.avatar = {
+    const avatar = {
       public_id: result[0].public_id,
       url: result[0].url,
     };
+
+    // Add the avatar to newUser if a file is uploaded
+    newUser.avatar = avatar;
   }
 
-  const user = await User.findByIdAndUpdate(id, updateData, {
+  const updatedUser = await User.findByIdAndUpdate(req.user, newUser, {
     new: true,
     runValidators: true,
   });
 
-  if (!user) return next(new ErrorHandler("User not found", 404));
-
-  res.status(200).json({
-    success: true,
-    message: "Profile updated successfully",
-    user,
-  });
+  res.status(200).json({ success: true, updatedUser });
 });
-
-
-
 
 const logout = TryCatch(async (req, res) => {
   return res
@@ -281,5 +265,5 @@ export {
   newUser,
   searchUser,
   sendFriendRequest,
-  updateUserProfile
+  updateMyProfile,
 };
