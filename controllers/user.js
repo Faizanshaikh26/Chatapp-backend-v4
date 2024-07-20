@@ -5,8 +5,7 @@ import { TryCatch } from "../middlewares/error.js";
 import { Chat } from "../models/chat.js";
 import { Request } from "../models/request.js";
 import { User } from "../models/user.js";
-import {hash} from "bcrypt"
-import {mongoose} from 'mongoose'
+import { hash } from "bcrypt";
 import {
   cookieOptions,
   emitEvent,
@@ -67,53 +66,41 @@ const getMyProfile = TryCatch(async (req, res, next) => {
     user,
   });
 });
-// Update user profile
-// Update user profile by user ID
+// U
 
-const updateUserProfile = TryCatch(async (req, res, next) => {
-  const { id } = req.params; // Extract user ID from URL parameters
-  const { name, bio, password } = req.body;
+const updateUserProfile = async (req, res) => {
+  const { id } = req.params;
   const file = req.file;
+  
+  try {
+    if (file) {
+      const result = await uploadFilesToCloudinary([file]);
+      const avatar = {
+        public_id: result[0].public_id,
+        url: result[0].url,
+      };
+      updatedUser.avatar=avatar
+    }
+    const user = await User.findByIdAndUpdate(
+      id,
+      {
+        $set: req.body,
+      },
+      { new: true }
+    );
 
-  // Validate ID
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return next(new ErrorHandler("Invalid user ID format", 400));
+    if (!user) {
+      return res.status(404).json({ message: "Cannot find user" });
+    }
+
+    const updatedUser = await user.save();
+    console.log("Updated user",updatedUser)
+
+    res.json(updatedUser);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
-
-  const updateData = {
-    name,
-    bio,
-  };
-
-  if (password) {
-    updateData.password = await hash(password, 10);
-  }
-
-  if (file) {
-    // Upload new avatar if a file is provided
-    const result = await uploadFilesToCloudinary([file]);
-    updateData.avatar = {
-      public_id: result[0].public_id,
-      url: result[0].url,
-    };
-  }
-
-  const user = await User.findByIdAndUpdate(id, updateData, {
-    new: true,
-    runValidators: true,
-  });
-
-  if (!user) return next(new ErrorHandler("User not found", 404));
-
-  res.status(200).json({
-    success: true,
-    message: "Profile updated successfully",
-    user,
-  });
-});
-
-
-
+};
 
 const logout = TryCatch(async (req, res) => {
   return res
@@ -288,5 +275,5 @@ export {
   newUser,
   searchUser,
   sendFriendRequest,
-  updateUserProfile
+  updateUserProfile,
 };
