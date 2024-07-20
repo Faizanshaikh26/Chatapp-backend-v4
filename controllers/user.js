@@ -5,7 +5,7 @@ import { TryCatch } from "../middlewares/error.js";
 import { Chat } from "../models/chat.js";
 import { Request } from "../models/request.js";
 import { User } from "../models/user.js";
-
+import {hash} from "bcrypt"
 import {
   cookieOptions,
   emitEvent,
@@ -66,39 +66,53 @@ const getMyProfile = TryCatch(async (req, res, next) => {
     user,
   });
 });
-// Get user profile
-const updateProfile = TryCatch(async (req, res, next) => {
-  const userId = req.user;
-  console.log("Updating user:", userId);
+// Update user profile
+// Update user profile by user ID
 
-  const { username, email, bio, name } = req.body;
+const updateUserProfile = TryCatch(async (req, res, next) => {
+  const { id } = req.params; // Extract user ID from URL parameters
+  const { name, bio, password } = req.body;
   const file = req.file;
 
-  let updateFields = { username, email, bio, name };
-  console.log("Update Fields:", updateFields);
+  // Validate ID
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return next(new ErrorHandler("Invalid user ID format", 400));
+  }
+
+  const updateData = {
+    name,
+    bio,
+  };
+
+  if (password) {
+    updateData.password = await hash(password, 10);
+  }
 
   if (file) {
+    // Upload new avatar if a file is provided
     const result = await uploadFilesToCloudinary([file]);
-    const avatar = {
+    updateData.avatar = {
       public_id: result[0].public_id,
       url: result[0].url,
     };
-    updateFields.avatar = avatar;
-    console.log("Avatar:", avatar);
   }
 
-  // Update user details
-  const user = await User.findByIdAndUpdate(userId, updateFields, {
+  const user = await User.findByIdAndUpdate(id, updateData, {
     new: true,
+    runValidators: true,
   });
-  console.log("Updated User:", user);
 
-  if (!user) {
-    return next(new ErrorHandler("User not found", 404));
-  }
+  if (!user) return next(new ErrorHandler("User not found", 404));
 
-  res.status(200).json({ success: true, user });
+  res.status(200).json({
+    success: true,
+    message: "Profile updated successfully",
+    user,
+  });
 });
+
+
+
 
 const logout = TryCatch(async (req, res) => {
   return res
@@ -273,5 +287,5 @@ export {
   newUser,
   searchUser,
   sendFriendRequest,
-  updateProfile,
+  updateUserProfile
 };
