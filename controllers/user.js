@@ -87,9 +87,11 @@ const updateMyProfile = TryCatch(async (req, res, next) => {
   const updatedUser = await User.findByIdAndUpdate(req.user, newUser, {
     new: true,
     runValidators: true,
-  });
 
-  res.status(200).json({ success: true, updatedUser });
+  });
+  const saveuser=updatedUser.save()
+
+  res.status(200).json({ success: true, saveuser });
 });
 
 const logout = TryCatch(async (req, res) => {

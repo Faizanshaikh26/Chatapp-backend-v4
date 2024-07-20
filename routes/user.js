@@ -31,17 +31,10 @@ app.post("/login", loginValidator(), validateHandler, login);
 // After here user must be logged in to access the routes
 
 app.use(isAuthenticated);
-
 app.get("/me", getMyProfile);
-
-app.put("/update",updateMyProfile)
-
-
-
+app.put("/update", singleAvatar,updateMyProfile)
 app.get("/logout", logout);
-
 app.get("/search", searchUser);
-
 app.put(
   "/sendrequest",
   sendRequestValidator(),
