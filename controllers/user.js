@@ -67,41 +67,38 @@ const getMyProfile = TryCatch(async (req, res, next) => {
   });
 });
 // Get user profile
-const updateProfile = async (req, res) => {
-  try {
-    const userId = req.user;
-    console.log("updateFields",userId)
-    const { username, email, bio, name } = req.body;
-    const file = req.file;
+const updateProfile = TryCatch(async (req, res, next) => {
+  const userId = req.user;
+  console.log("Updating user:", userId);
 
-    let updateFields = { username, email, bio, name };
+  const { username, email, bio, name } = req.body;
+  const file = req.file;
 
-    if (file) {
-      const result = await uploadFilesToCloudinary([file]);
-      const avatar = {
-        public_id: result[0].public_id,
-        url: result[0].url,
-      };
-      updateFields.avatar = avatar;
-    }
+  let updateFields = { username, email, bio, name };
+  console.log("Update Fields:", updateFields);
 
-    // Update user details
-    const user = await User.findByIdAndUpdate(userId, updateFields, { new: true });
-
-    if (!user) {
-      return res.status(404).json({ success: false, error: "User not found" });
-    }
-
-    res.status(200).json({ success: true, user });
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ success: false, error: "Server error" });
+  if (file) {
+    const result = await uploadFilesToCloudinary([file]);
+    const avatar = {
+      public_id: result[0].public_id,
+      url: result[0].url,
+    };
+    updateFields.avatar = avatar;
+    console.log("Avatar:", avatar);
   }
-}; 
 
+  // Update user details
+  const user = await User.findByIdAndUpdate(userId, updateFields, {
+    new: true,
+  });
+  console.log("Updated User:", user);
 
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
 
-
+  res.status(200).json({ success: true, user });
+});
 
 const logout = TryCatch(async (req, res) => {
   return res
@@ -276,6 +273,5 @@ export {
   newUser,
   searchUser,
   sendFriendRequest,
-  updateProfile
-
+  updateProfile,
 };
