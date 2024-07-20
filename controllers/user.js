@@ -5,7 +5,7 @@ import { TryCatch } from "../middlewares/error.js";
 import { Chat } from "../models/chat.js";
 import { Request } from "../models/request.js";
 import { User } from "../models/user.js";
-import {hash} from "bcrypt"
+
 import {
   cookieOptions,
   emitEvent,
@@ -66,44 +66,39 @@ const getMyProfile = TryCatch(async (req, res, next) => {
     user,
   });
 });
-// Update user profile
-// Update user profile by user ID
-const updateUserProfile = TryCatch(async (req, res, next) => {
-  const { id } = req.params; // Extract user ID from URL parameters
-  const { name, bio, password } = req.body;
-  const file = req.file;
+// Get user profile
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user;
+    console.log("updateFields",userId)
+    const { username, email, bio, name } = req.body;
+    const file = req.file;
 
-  const updateData = {
-    name,
-    bio,
-  };
+    let updateFields = { username, email, bio, name };
 
-  if (password) {
-    updateData.password = await hash(password, 10);
+    if (file) {
+      const result = await uploadFilesToCloudinary([file]);
+      const avatar = {
+        public_id: result[0].public_id,
+        url: result[0].url,
+      };
+      updateFields.avatar = avatar;
+    }
+
+    // Update user details
+    const user = await Users.findByIdAndUpdate(userId, updateFields, { new: true });
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ success: false, error: "Server error" });
   }
+}; 
 
-  if (file) {
-    // Upload new avatar if a file is provided
-    const result = await uploadFilesToCloudinary([file]);
-    updateData.avatar = {
-      public_id: result[0].public_id,
-      url: result[0].url,
-    };
-  }
-
-  const user = await User.findByIdAndUpdate(id, updateData, {
-    new: true,
-    runValidators: true,
-  });
-
-  if (!user) return next(new ErrorHandler("User not found", 404));
-
-  res.status(200).json({
-    success: true,
-    message: "Profile updated successfully",
-    user,
-  });
-});
 
 
 
@@ -281,5 +276,6 @@ export {
   newUser,
   searchUser,
   sendFriendRequest,
-  updateUserProfile
+  updateProfile
+
 };

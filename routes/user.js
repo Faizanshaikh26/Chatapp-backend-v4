@@ -9,7 +9,7 @@ import {
   newUser,
   searchUser,
   sendFriendRequest,
-  updateUserProfile,
+  updateProfile,
 } from "../controllers/user.js";
 import {
   acceptRequestValidator,
@@ -31,7 +31,7 @@ app.post("/login", loginValidator(), validateHandler, login);
 app.use(isAuthenticated);
 
 app.get("/me", getMyProfile);
-app.put("/update/:id", updateUserProfile);
+app.put("/profile", updateProfile);
 
 app.get("/logout", logout);
 
