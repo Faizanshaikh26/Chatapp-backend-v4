@@ -371,6 +371,34 @@ const deleteChat = TryCatch(async (req, res, next) => {
     message: "Chat deleted successfully",
   });
 });
+const unsendMessage = TryCatch(async (req, res, next) => {
+  const messageId = req.params.id;
+  const userId = req.user;
+
+  // Find the message to ensure the user is the sender
+  const message = await Message.findById(messageId);
+
+  if (!message) {
+    return next(new ErrorHandler('Message not found', 404));
+  }
+
+  // Check if the user is the sender of the message
+  if (message.sender.toString() !== userId.toString()) {
+    return next(new ErrorHandler('You are not authorized to delete this message', 403));
+  }
+
+  // Delete attachments from Cloudinary if any
+  if (message.attachments && message.attachments.length > 0) {
+    await Promise.all(
+      message.attachments.map((attachment) => deletFilesFromCloudinary(attachment.public_id))
+    );
+  }
+
+  // Delete the message
+  await message.deleteOne();
+
+  res.status(200).json({ success: true, message: 'Message unsent successfully' });
+});
 
 const getMessages = TryCatch(async (req, res, next) => {
   const chatId = req.params.id;
@@ -418,5 +446,6 @@ export {
   getChatDetails,
   renameGroup,
   deleteChat,
+  unsendMessage,
   getMessages,
 };

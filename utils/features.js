@@ -66,8 +66,17 @@ const uploadFilesToCloudinary = async (files = []) => {
   }
 };
 
-const deletFilesFromCloudinary = async (public_ids) => {
-  // Delete files from cloudinary
+
+const deletFilesFromCloudinary = async (publicId) => {
+  return new Promise((resolve, reject) => {
+    cloudinary.v2.uploader.destroy(publicId, (error, result) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(result);
+      }
+    });
+  });
 };
 
 export {

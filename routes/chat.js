@@ -11,6 +11,7 @@ import {
   removeMember,
   renameGroup,
   sendAttachments,
+  unsendMessage,
 } from "../controllers/chat.js";
 import {
   addMemberValidator,
@@ -44,6 +45,8 @@ app.put(
   validateHandler,
   removeMember
 );
+
+app.delete("/message/:id", unsendMessage);
 
 app.delete("/leave/:id", chatIdValidator(), validateHandler, leaveGroup);
 
