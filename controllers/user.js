@@ -117,9 +117,7 @@ const resetPassword = async (req, res) => {
 
   try {
     // Find user with the reset token
-    const user = await User.findOne({ resetPasswordToken: resetToken }).select(
-      "+password"
-    );
+    const user = await User.findOne({ resetPasswordToken: resetToken });
 
     if (!user) {
       return res
@@ -141,20 +139,8 @@ const resetPassword = async (req, res) => {
         .json({ success: false, error: "New password is required" });
     }
 
-    // Check if the new password is the same as the previous one
-    const isSamePassword = await compare(newPassword, user.password);
-    if (isSamePassword) {
-      return res.status(400).json({
-        success: false,
-        error: "New password cannot be the same as the previous one",
-      });
-    }
-
-    // Hash the new password
-    const hashedPassword = await hash(newPassword, 12);
-
-    // Update user's password and clear reset token fields
-    user.password = hashedPassword;
+    // Set the new password (this will trigger the pre-save middleware to hash it)
+    user.password = newPassword;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();
@@ -167,6 +153,7 @@ const resetPassword = async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to reset password" });
   }
 };
+
 const getMyProfile = TryCatch(async (req, res, next) => {
   const user = await User.findById(req.user);
 
