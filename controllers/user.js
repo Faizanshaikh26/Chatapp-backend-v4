@@ -1,4 +1,4 @@
-import { compare ,hash} from "bcrypt";
+import { compare, hash } from "bcrypt";
 import { NEW_REQUEST, REFETCH_CHATS } from "../constants/events.js";
 import { getOtherMember } from "../lib/helper.js";
 import { TryCatch } from "../middlewares/error.js";
@@ -124,28 +124,27 @@ const resetPassword = async (req, res) => {
   const { newPassword } = req.body;
 
   try {
-    const user = await User.findOne({ resetPasswordToken: resetToken });
+    // Find user with the reset token
+    const user = await User.findOne({ resetPasswordToken: resetToken }).select("+password");
 
     if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Invalid or expired token" });
+      return res.status(404).json({ success: false, error: "Invalid or expired token" });
     }
 
     // Check if the token has expired
     if (user.resetPasswordExpires < Date.now()) {
-      return res
-        .status(401)
-        .json({ success: false, error: "Token has expired" });
+      return res.status(401).json({ success: false, error: "Token has expired" });
+    }
+
+    // Ensure newPassword is provided
+    if (!newPassword) {
+      return res.status(400).json({ success: false, error: "New password is required" });
     }
 
     // Check if the new password is the same as the previous one
     const isSamePassword = await compare(newPassword, user.password);
     if (isSamePassword) {
-      return res.status(400).json({
-        success: false,
-        error: "New password cannot be the same as the previous one",
-      });
+      return res.status(400).json({ success: false, error: "New password cannot be the same as the previous one" });
     }
 
     // Hash the new password
@@ -157,14 +156,13 @@ const resetPassword = async (req, res) => {
     user.resetPasswordExpires = undefined;
     await user.save();
 
-    res
-      .status(200)
-      .json({ success: true, message: "Password reset successfully" });
+    res.status(200).json({ success: true, message: "Password reset successfully" });
   } catch (error) {
-    // console.error("Error resetting password:", error);
+    console.error("Error resetting password:", error);
     res.status(500).json({ success: false, error: "Failed to reset password" });
   }
 };
+
 
 const getMyProfile = TryCatch(async (req, res, next) => {
   const user = await User.findById(req.user);
