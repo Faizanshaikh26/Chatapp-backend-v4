@@ -1,12 +1,14 @@
 import express from "express";
 import {
   acceptFriendRequest,
+  forgotPassword,
   getMyFriends,
   getMyNotifications,
   getMyProfile,
   login,
   logout,
   newUser,
+  resetPassword,
   searchUser,
   sendFriendRequest,
   updateMyProfile
@@ -24,8 +26,8 @@ import { singleAvatar } from "../middlewares/multer.js";
 const app = express.Router();
 
 // Public routes (no authentication required)
-// app.post("/forgotPassword", forgotPassword); // Forgot password route
-// app.post("/resetPassword/:token", resetPassword);
+app.post("/forgotPassword", forgotPassword); // Forgot password route
+app.post("/resetPassword/:token", resetPassword);
 app.post("/new", singleAvatar, registerValidator(), validateHandler, newUser);
 app.post("/login", loginValidator(), validateHandler, login);
 
