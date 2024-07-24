@@ -5,6 +5,7 @@ import { TryCatch } from "../middlewares/error.js";
 import { Chat } from "../models/chat.js";
 import { Request } from "../models/request.js";
 import { User } from "../models/user.js";
+import nodemailer from 'nodemailer'
 
 import {
   cookieOptions,
