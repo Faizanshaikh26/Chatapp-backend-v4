@@ -9,6 +9,7 @@ import { User } from "../models/user.js";
 import {
   cookieOptions,
   emitEvent,
+  generateToken,
   sendToken,
   uploadFilesToCloudinary,
 } from "../utils/features.js";
