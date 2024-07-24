@@ -29,6 +29,15 @@ const sendToken = (res, user, code, message) => {
     message,
   });
 };
+const generateToken = () => {
+  return jwt.sign(
+    { data: "reset_password_token" },
+    process.env.JWT_SECRET || "Insta-CHat",
+    {
+      expiresIn: "1h",
+    }
+  );
+};
 
 const emitEvent = (req, event, users, data) => {
   const io = req.app.get("io");
@@ -84,6 +93,7 @@ const deletFilesFromCloudinary = async (publicId) => {
 export {
   connectDB,
   sendToken,
+  generateToken,
   cookieOptions,
   emitEvent,
   deletFilesFromCloudinary,

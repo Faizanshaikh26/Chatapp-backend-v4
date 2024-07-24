@@ -1,17 +1,17 @@
 import express from "express";
 import {
   acceptFriendRequest,
+  forgotPassword,
   getMyFriends,
   getMyNotifications,
   getMyProfile,
   login,
   logout,
   newUser,
+  resetPassword,
   searchUser,
   sendFriendRequest,
   updateMyProfile,
- 
-
 } from "../controllers/user.js";
 import {
   acceptRequestValidator,
@@ -25,14 +25,17 @@ import { singleAvatar } from "../middlewares/multer.js";
 
 const app = express.Router();
 
+// Public routes (no authentication required)
+app.post("/forgotPassword", forgotPassword); // Forgot password route
+app.post("/resetPassword/:token", resetPassword);
 app.post("/new", singleAvatar, registerValidator(), validateHandler, newUser);
 app.post("/login", loginValidator(), validateHandler, login);
 
-// After here user must be logged in to access the routes
+// Authenticated routes (user must be logged in)
+app.use(isAuthenticated); // Middleware to protect subsequent routes
 
-app.use(isAuthenticated);
 app.get("/me", getMyProfile);
-app.put("/update", singleAvatar,updateMyProfile)
+app.put("/update", singleAvatar, updateMyProfile);
 app.get("/logout", logout);
 app.get("/search", searchUser);
 app.put(
@@ -50,7 +53,6 @@ app.put(
 );
 
 app.get("/notifications", getMyNotifications);
-
 app.get("/friends", getMyFriends);
 
 export default app;

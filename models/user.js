@@ -7,6 +7,10 @@ const schema = new Schema(
       type: String,
       required: true,
     },
+    email: {
+      type: String,
+      required: true,
+    },
     bio: {
       type: String,
       required: true,
@@ -31,6 +35,8 @@ const schema = new Schema(
         required: true,
       },
     },
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
   },
   {
     timestamps: true,
