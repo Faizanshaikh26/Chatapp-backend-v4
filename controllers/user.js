@@ -6,11 +6,9 @@ import { Chat } from "../models/chat.js";
 import { Request } from "../models/request.js";
 import { User } from "../models/user.js";
 
-import nodemailer from "nodemailer";
 import {
   cookieOptions,
   emitEvent,
-  generateToken,
   sendToken,
   uploadFilesToCloudinary,
 } from "../utils/features.js";
@@ -18,7 +16,7 @@ import { ErrorHandler } from "../utils/utility.js";
 
 // Create a new user and save it to the database and save token in cookie
 const newUser = TryCatch(async (req, res, next) => {
-  const { name, username, password, bio, email } = req.body;
+  const { name, username, password, bio } = req.body;
 
   const file = req.file;
 
@@ -35,7 +33,6 @@ const newUser = TryCatch(async (req, res, next) => {
     name,
     bio,
     username,
-    email,
     password,
     avatar,
   });
@@ -45,28 +42,19 @@ const newUser = TryCatch(async (req, res, next) => {
 
 // Login user and save token in cookie
 const login = TryCatch(async (req, res, next) => {
-  const { email, password } = req.body;
+  const { username, password } = req.body;
 
-  const user = await User.findOne({ email }).select("+password");
+  const user = await User.findOne({ username }).select("+password");
 
-  if (!user) return next(new ErrorHandler("Invalid email or Password", 404));
+  if (!user) return next(new ErrorHandler("Invalid Username or Password", 404));
 
   const isMatch = await compare(password, user.password);
 
-  if (!isMatch) return next(new ErrorHandler("Invalid email or Password", 404));
+  if (!isMatch)
+    return next(new ErrorHandler("Invalid Username or Password", 404));
 
   sendToken(res, user, 200, `Welcome Back, ${user.name}`);
 });
-const logout = TryCatch(async (req, res) => {
-  return res
-    .status(200)
-    .cookie("chattu-token", "", { ...cookieOptions, maxAge: 0 })
-    .json({
-      success: true,
-      message: "Logged out successfully",
-    });
-});
-
 const forgotPassword = async (req, res) => {
   if (!req.body.email) {
     return res.status(400).json({ success: false, error: "Email is required" });
@@ -125,26 +113,39 @@ const resetPassword = async (req, res) => {
 
   try {
     // Find user with the reset token
-    const user = await User.findOne({ resetPasswordToken: resetToken }).select("+password");
+    const user = await User.findOne({ resetPasswordToken: resetToken }).select(
+      "+password"
+    );
 
     if (!user) {
-      return res.status(404).json({ success: false, error: "Invalid or expired token" });
+      return res
+        .status(404)
+        .json({ success: false, error: "Invalid or expired token" });
     }
 
     // Check if the token has expired
     if (user.resetPasswordExpires < Date.now()) {
-      return res.status(401).json({ success: false, error: "Token has expired" });
+      return res
+        .status(401)
+        .json({ success: false, error: "Token has expired" });
     }
 
     // Ensure newPassword is provided
     if (!newPassword) {
-      return res.status(400).json({ success: false, error: "New password is required" });
+      return res
+        .status(400)
+        .json({ success: false, error: "New password is required" });
     }
 
     // Check if the new password is the same as the previous one
     const isSamePassword = await compare(newPassword, user.password);
     if (isSamePassword) {
-      return res.status(400).json({ success: false, error: "New password cannot be the same as the previous one" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          error: "New password cannot be the same as the previous one",
+        });
     }
 
     // Hash the new password
@@ -156,13 +157,14 @@ const resetPassword = async (req, res) => {
     user.resetPasswordExpires = undefined;
     await user.save();
 
-    res.status(200).json({ success: true, message: "Password reset successfully" });
+    res
+      .status(200)
+      .json({ success: true, message: "Password reset successfully" });
   } catch (error) {
     console.error("Error resetting password:", error);
     res.status(500).json({ success: false, error: "Failed to reset password" });
   }
 };
-
 
 const getMyProfile = TryCatch(async (req, res, next) => {
   const user = await User.findById(req.user);
@@ -199,6 +201,16 @@ const updateMyProfile = TryCatch(async (req, res, next) => {
   const saveuser = updatedUser.save();
 
   res.status(200).json({ success: true, saveuser });
+});
+
+const logout = TryCatch(async (req, res) => {
+  return res
+    .status(200)
+    .cookie("chattu-token", "", { ...cookieOptions, maxAge: 0 })
+    .json({
+      success: true,
+      message: "Logged out successfully",
+    });
 });
 
 const searchUser = TryCatch(async (req, res) => {
