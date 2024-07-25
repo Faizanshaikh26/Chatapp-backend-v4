@@ -10,6 +10,5 @@ const corsOptions = {
 };
 
 const CHATTU_TOKEN = "chattu-token";
-const   INSTACHAT_TOKEN = "InstaCHat-token";
 
-export { corsOptions, CHATTU_TOKEN ,INSTACHAT_TOKEN};
+export { corsOptions, CHATTU_TOKEN };
